@@ -53,7 +53,7 @@ class _OracleScreenState extends ConsumerState<OracleScreen> {
 
     setState(() {
       _isGenerating = true;
-      _responseNotifier.value = 'User: $text\\n\\nOracle: ';
+      _responseNotifier.value = 'User: $text\n\nOracle: ';
     });
     
     _textController.clear();
@@ -99,7 +99,7 @@ class _OracleScreenState extends ConsumerState<OracleScreen> {
                     if (value.isEmpty) {
                       return Center(
                         child: Text(
-                          'SYSTEM ONLINE.\\nAwaiting instructions...',
+                          'SYSTEM ONLINE.\nAwaiting instructions...',
                           textAlign: TextAlign.center,
                           style: EdgeTheme.monoTextStyle.copyWith(
                             color: Colors.white54,
