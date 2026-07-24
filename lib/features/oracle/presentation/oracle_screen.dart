@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/edge_theme.dart';
 import '../domain/llm_isolate.dart';
+import '../domain/model_downloader.dart';
 
 class OracleScreen extends ConsumerStatefulWidget {
   const OracleScreen({Key? key}) : super(key: key);
@@ -20,10 +21,14 @@ class _OracleScreenState extends ConsumerState<OracleScreen> {
   
   StreamSubscription? _tokenSubscription;
   bool _isGenerating = false;
+  double _downloadProgress = 0.0;
+  bool _isModelDownloaded = false;
 
   @override
   void initState() {
     super.initState();
+    _checkModelStatus();
+    
     // Initialize Isolate
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(llmIsolateProvider).init();
@@ -32,6 +37,23 @@ class _OracleScreenState extends ConsumerState<OracleScreen> {
         _responseNotifier.value += token;
         _scrollToBottom();
       });
+    });
+  }
+
+  Future<void> _checkModelStatus() async {
+    final isDownloaded = await ref.read(modelDownloaderProvider).isModelDownloaded();
+    if (mounted) setState(() => _isModelDownloaded = isDownloaded);
+  }
+
+  void _startDownload() {
+    setState(() => _downloadProgress = 0.01);
+    ref.read(modelDownloaderProvider).downloadModel().listen((progress) {
+      if (mounted) setState(() => _downloadProgress = progress);
+    }, onDone: () {
+      if (mounted) setState(() => _isModelDownloaded = true);
+    }, onError: (e) {
+      if (mounted) setState(() => _downloadProgress = 0.0);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Download failed: $e')));
     });
   }
 
@@ -97,12 +119,59 @@ class _OracleScreenState extends ConsumerState<OracleScreen> {
                   valueListenable: _responseNotifier,
                   builder: (context, value, child) {
                     if (value.isEmpty) {
+                      if (!_isModelDownloaded) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'SYSTEM ONLINE.\nAwaiting model weights...',
+                                textAlign: TextAlign.center,
+                                style: EdgeTheme.monoTextStyle.copyWith(
+                                  color: Colors.white54,
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              Consumer(
+                                builder: (context, ref, _) {
+                                  return ElevatedButton.icon(
+                                    onPressed: _downloadProgress > 0 ? null : _startDownload,
+                                    icon: const Icon(Icons.download),
+                                    label: Text('DOWNLOAD QWEN 2.5 0.5B (350MB)', style: EdgeTheme.monoTextStyle),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: EdgeTheme.accentAction,
+                                      foregroundColor: Colors.white,
+                                    ),
+                                  );
+                                }
+                              ),
+                              if (_downloadProgress > 0 && _downloadProgress < 1.0) ...[
+                                const SizedBox(height: 16),
+                                SizedBox(
+                                  width: 200,
+                                  child: LinearProgressIndicator(
+                                    value: _downloadProgress,
+                                    backgroundColor: EdgeTheme.surfaceRaised,
+                                    color: EdgeTheme.stateGood,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '${(_downloadProgress * 100).toStringAsFixed(1)}%',
+                                  style: EdgeTheme.monoTextStyle,
+                                )
+                              ]
+                            ],
+                          ),
+                        );
+                      }
+                      
                       return Center(
                         child: Text(
-                          'SYSTEM ONLINE.\nAwaiting instructions...',
+                          'MODEL LOADED.\nAwaiting instructions...',
                           textAlign: TextAlign.center,
                           style: EdgeTheme.monoTextStyle.copyWith(
-                            color: Colors.white54,
+                            color: EdgeTheme.stateGood,
                           ),
                         ),
                       );
