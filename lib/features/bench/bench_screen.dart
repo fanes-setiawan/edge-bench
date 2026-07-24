@@ -89,7 +89,7 @@ class BenchScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 90,
+            width: 110,
             child: Text(
               '$label:',
               style: EdgeTheme.monoTextStyle.copyWith(color: Colors.white70),
