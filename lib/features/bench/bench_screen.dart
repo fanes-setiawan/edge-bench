@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/edge_theme.dart';
+import '../oracle/presentation/oracle_screen.dart';
 import 'device_fingerprint.dart';
 
 class BenchScreen extends ConsumerWidget {
@@ -55,7 +56,9 @@ class BenchScreen extends ConsumerWidget {
               subtitle: 'LLM Text Generation & RAG',
               icon: Icons.chat_bubble_outline,
               onTap: () {
-                // TODO: Navigate to Oracle
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const OracleScreen()),
+                );
               },
             ),
             const SizedBox(height: 8),
